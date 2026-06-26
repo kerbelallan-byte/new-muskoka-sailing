@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Muskoka Sailing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <script id="CONTENT_CONTROL_CENTER">
+    const SITE = {
+      businessName: "Muskoka Sailing",
+      phone:        "647-220-3060",
+      email:        "muskokasailing2026@gmail.com",
+      location:     "Muskoka, ON",
+      nav: { home:"Home", services:"Services", about:"About Us", prices:"Prices", schedule:"Schedule", contact:"Contact" },
+      hero: {
+        heading:    "Learn to Sail with Confidence",
+        subheading: "Our unique two-coach system puts one instructor on your boat and one coach on a motorboat — so you get real-time feedback both on deck and from the water.",
+        ctaLabel:   "Book a Lesson",
+      },
+      services: {
+        heading: "What We Do",
+        body: "Our team comes to your house with our coach boat. While one member of our team is on the boat teaching in real time, the other member is watching, giving tips, and filming for post-session lessons and debrief.",
+      },
+      about: {
+        heading: "Meet Your Coaches",
+        intro:   "We're two passionate 15-year-olds who grew up on the lakes of Muskoka and decided to turn our shared love of sailing into a proper coaching program. We might be young, but we know these waters and we know how to teach — we'll prove it the moment you step on the boat.",
+        coach1: { name:"Coach — Allan Kerbel", bio:"Current competitive racer. I've been sailing Lake Muskoka since I was a baby. Firm believer that the best way to learn is to actually sail." },
+        coach2: { name:"Coach — Ben Faught",   bio:"Current competitive racer with Allan. I run the coach boat and call out corrections you can't see from the cockpit. I also handle the camera for your post-session debrief clips." },
+      },
+      prices: {
+        heading: "Pricing",
+        note:    "All prices are per session. Text or call us to book.",
+        items: [
+          { service:"Intro Lesson (1hr 30 mins)",                          price:"$120", detail:"Perfect for beginners. Basic sail trim, tacks & gybes." },
+          { service:"Boat Setup Included (1hr 30 mins)(mast raise/lower)", price:"$150", detail:"Full boat setup and lesson included." },
+        ],
+      },
+    };
+
+    const ADMIN_PASSWORD = "Muskoka123!";
+    const LS_KEY = "muskoka_booked_times";
+  </script>
+
+  <style>
+    :root {
+      --navy:  #0a1f3c;
+      --navy2: #122a52;
+      --cream: #f4f1eb;
+      --gold:  #c8a84b;
+      --wave:  #1a4a7a;
+    }
+    * { box-sizing: border-box; }
+    body { font-family:'DM Sans',sans-serif; background:var(--cream); color:var(--navy); margin:0; }
+    h1,h2,h3 { font-family:'Playfair Display',serif; }
+
+    .rope-bar {
+      background: repeating-linear-gradient(90deg, var(--gold) 0,var(--gold) 3px, transparent 3px,transparent 9px, var(--gold) 9px,var(--gold) 12px, transparent 12px,transparent 18px);
+      height: 5px;
+    }
+
+    /* ── Admin button ── */
+    #admin-btn {
+      position: fixed; top:10px; left:10px; z-index:9999;
+      background: rgba(10,31,60,0.78);
+      border: 1px solid rgba(200,168,75,0.3);
+      color: rgba(200,168,75,0.7);
+      font-family:'DM Sans',sans-serif;
+      font-size:0.6rem; font-weight:600; letter-spacing:0.16em; text-transform:uppercase;
+      padding:0.28rem 0.62rem; border-radius:4px; cursor:pointer;
+      backdrop-filter:blur(6px); transition:all 0.2s;
+    }
+    #admin-btn:hover { background:rgba(10,31,60,0.97); border-color:var(--gold); color:var(--gold); }
+    #admin-btn.active { border-color:rgba(80,200,120,0.55); color:rgba(80,200,120,0.9); }
+
+    /* ── Nav ── */
+    nav { position:sticky; top:0; z-index:100; background:var(--navy); border-bottom:2px solid var(--gold); }
+    nav a { color:rgba(255,255,255,0.75); text-decoration:none; font-size:0.78rem; letter-spacing:0.12em; text-transform:uppercase; font-weight:500; padding:0.75rem 0.9rem; display:inline-block; transition:color 0.2s; }
+    nav a:hover { color:var(--gold); }
+
+    /* ── Hero ── */
+    #home { background:linear-gradient(160deg,var(--navy) 0%,var(--wave) 55%,#1d6a9e 100%); color:white; position:relative; overflow:hidden; padding:5rem 1.5rem 4rem; }
+    .wave-overlay { position:absolute; bottom:0; left:0; right:0; opacity:0.18; pointer-events:none; }
+    .compass { position:absolute; top:2rem; right:-2rem; width:220px; height:220px; opacity:0.07; pointer-events:none; }
+
+    .section-label { font-size:0.7rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--gold); font-weight:500; margin-bottom:0.4rem; }
+    .section-title { font-family:'Playfair Display',serif; font-size:clamp(1.8rem,5vw,2.6rem); font-weight:800; line-height:1.15; color:var(--navy); }
+    .gold-rule { height:2px; background:var(--gold); width:3rem; }
+    .card { background:white; border-radius:12px; box-shadow:0 2px 16px rgba(10,31,60,0.08); overflow:hidden; border:1px solid rgba(10,31,60,0.07); }
+    .price-card:hover { transform:translateY(-3px); box-shadow:0 8px 28px rgba(10,31,60,0.14); transition:all 0.25s; }
+
+    .btn-gold { background:var(--gold); color:var(--navy); font-weight:600; letter-spacing:0.06em; border-radius:4px; padding:0.75rem 1.8rem; font-size:0.9rem; border:none; cursor:pointer; display:inline-block; transition:filter 0.2s; text-decoration:none; }
+    .btn-gold:hover { filter:brightness(1.08); }
+    .btn-outline { border:2px solid rgba(255,255,255,0.55); color:white; font-weight:500; border-radius:4px; padding:0.7rem 1.6rem; font-size:0.9rem; cursor:pointer; display:inline-block; transition:border-color 0.2s,color 0.2s; text-decoration:none; letter-spacing:0.04em; }
+    .btn-outline:hover { border-color:var(--gold); color:var(--gold); }
+
+    .reveal { opacity:0; transform:translateY(24px); transition:opacity 0.6s ease,transform 0.6s ease; }
+    .reveal.visible { opacity:1; transform:none; }
+
+    footer { background:var(--navy); color:rgba(255,255,255,0.55); }
+    footer a { color:var(--gold); text-decoration:none; }
+
+    /* ── Services ── */
+    .services-textbox {
+      background: white;
+      border-radius: 14px;
+      border: 2px solid var(--gold);
+      padding: 2.2rem 2.4rem;
+      font-size: 1.08rem;
+      line-height: 1.85;
+      color: #3a3a3a;
+      box-shadow: 0 4px 24px rgba(10,31,60,0.08);
+      position: relative;
+    }
+    .services-textbox::before {
+      content: '⛵';
+      position: absolute;
+      top: -1.1rem;
+      left: 2rem;
+      font-size: 1.6rem;
+      background: var(--cream);
+      padding: 0 0.4rem;
+    }
+
+    /* ══ SCHEDULE ══ */
+    .schedule-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:0.6rem; }
+
+    .day-card {
+      border-radius:10px; padding:0.85rem 0.45rem 0.9rem; text-align:center;
+      border:1.5px solid rgba(10,31,60,0.08); background:white;
+      transition:transform 0.2s,box-shadow 0.2s; position:relative; user-select:none;
+    }
+    .day-card.available {
+      border-color:var(--gold);
+      background:linear-gradient(160deg,#fffdf5 0%,#fff8e7 100%);
+      box-shadow:0 4px 18px rgba(200,168,75,0.12);
+    }
+    .day-card.available:hover { transform:translateY(-3px); box-shadow:0 8px 28px rgba(200,168,75,0.22); }
+    .day-card.unavailable { background:#fafafa; opacity:0.58; }
+    .day-name { font-size:0.62rem; letter-spacing:0.15em; text-transform:uppercase; font-weight:600; color:#aaa; margin-bottom:0.45rem; }
+    .day-card.available .day-name { color:var(--navy2); }
+    .day-icon { font-size:1.25rem; margin-bottom:0.35rem; display:block; }
+    .day-card.unavailable .day-icon { filter:grayscale(1); opacity:0.35; }
+    .time-slot { font-size:0.68rem; font-weight:600; color:var(--navy); line-height:1.4; margin-top:0.25rem; }
+    .time-badge { display:inline-block; background:var(--gold); color:var(--navy); font-size:0.55rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; border-radius:999px; padding:0.13rem 0.48rem; margin-top:0.4rem; }
+    .unavail-label { font-size:0.63rem; color:#bbb; margin-top:0.4rem; font-style:italic; }
+
+    /* Admin edit hint */
+    .day-card.admin-mode { cursor:pointer; }
+    .edit-hint { position:absolute; top:5px; right:6px; font-size:0.6rem; color:var(--gold); opacity:0; transition:opacity 0.2s; pointer-events:none; }
+    .day-card.admin-mode:hover .edit-hint { opacity:1; }
+
+    /* ── Hover tooltip ── */
+    .booked-tooltip {
+      display:none; position:absolute; bottom:calc(100% + 9px); left:50%; transform:translateX(-50%);
+      background:var(--navy); color:white; border-radius:8px; padding:0.7rem 0.9rem;
+      min-width:150px; max-width:210px; z-index:600;
+      box-shadow:0 8px 24px rgba(10,31,60,0.3); pointer-events:none;
+      border-top:2px solid var(--gold); white-space:normal; text-align:left;
+    }
+    .booked-tooltip::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:6px solid transparent; border-top-color:var(--navy); }
+    .tt-title { font-size:0.58rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); font-weight:600; margin-bottom:0.4rem; }
+    .tt-item { font-size:0.73rem; color:rgba(255,255,255,0.85); padding:0.15rem 0; border-bottom:1px solid rgba(255,255,255,0.07); line-height:1.4; }
+    .tt-item:last-child { border-bottom:none; }
+    .tt-empty { font-size:0.7rem; color:rgba(255,255,255,0.38); font-style:italic; }
+    .day-card:hover .booked-tooltip { display:block; }
+
+    .schedule-legend { display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap; margin-top:1.3rem; font-size:0.78rem; color:#666; }
+    .legend-dot { width:11px; height:11px; border-radius:50%; display:inline-block; margin-right:0.35rem; vertical-align:middle; }
+
+    .schedule-note-card {
+      background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);
+      border-radius:12px; padding:1.2rem 1.4rem; display:flex; align-items:center; gap:1rem; margin-top:1.5rem;
+      box-shadow:0 4px 20px rgba(10,31,60,0.18);
+    }
+
+    /* ══ MODALS ══ */
+    .modal-overlay {
+      display:none; position:fixed; inset:0; background:rgba(5,15,30,0.7);
+      z-index:10000; align-items:center; justify-content:center; backdrop-filter:blur(3px);
+    }
+    .modal-overlay.open { display:flex; }
+
+    .modal-box {
+      background:white; border-radius:14px; padding:2rem; width:min(92vw,360px);
+      box-shadow:0 24px 60px rgba(10,31,60,0.28); border-top:3px solid var(--gold);
+    }
+    .modal-box h3 { font-family:'Playfair Display',serif; color:var(--navy); font-size:1.2rem; margin:0 0 0.25rem; }
+    .modal-box p { font-size:0.8rem; color:#999; margin:0 0 1.1rem; }
+    .modal-input { width:100%; border:1.5px solid rgba(10,31,60,0.15); border-radius:6px; padding:0.62rem 0.82rem; font-size:0.88rem; font-family:'DM Sans',sans-serif; color:var(--navy); outline:none; transition:border-color 0.2s; margin-bottom:0.65rem; }
+    .modal-input:focus { border-color:var(--gold); }
+    .modal-error { font-size:0.75rem; color:#c0392b; min-height:1rem; margin:-0.2rem 0 0.55rem; }
+    .modal-actions { display:flex; gap:0.5rem; justify-content:flex-end; }
+    .modal-cancel { background:none; border:1.5px solid rgba(10,31,60,0.13); color:#999; border-radius:5px; padding:0.48rem 1rem; font-size:0.8rem; cursor:pointer; font-family:'DM Sans',sans-serif; transition:border-color 0.2s; }
+    .modal-cancel:hover { border-color:#bbb; }
+    .modal-submit { background:var(--navy); color:white; border:none; border-radius:5px; padding:0.48rem 1.2rem; font-size:0.8rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:background 0.2s; }
+    .modal-submit:hover { background:var(--navy2); }
+
+    /* Booking editor */
+    .booking-box {
+      background:white; border-radius:14px; padding:1.75rem; width:min(92vw,400px);
+      box-shadow:0 24px 60px rgba(10,31,60,0.28); border-top:3px solid var(--gold);
+    }
+    .booking-box h3 { font-family:'Playfair Display',serif; color:var(--navy); font-size:1.15rem; margin:0 0 0.9rem; }
+    .booked-list { list-style:none; padding:0; margin:0 0 0.9rem; display:flex; flex-direction:column; gap:0.4rem; min-height:2rem; }
+    .booked-list li { display:flex; align-items:center; justify-content:space-between; background:#f8f6f0; border-radius:6px; padding:0.42rem 0.7rem; font-size:0.82rem; color:var(--navy); border-left:3px solid var(--gold); }
+    .del-btn { background:none; border:none; color:#ccc; cursor:pointer; font-size:0.9rem; padding:0 0.1rem; transition:color 0.2s; line-height:1; }
+    .del-btn:hover { color:#c0392b; }
+    .hint-text { font-size:0.7rem; color:#bbb; margin-bottom:0.7rem; }
+    .add-row { display:flex; gap:0.5rem; margin-bottom:0.2rem; }
+    .add-input { flex:1; border:1.5px solid rgba(10,31,60,0.14); border-radius:6px; padding:0.48rem 0.68rem; font-size:0.82rem; font-family:'DM Sans',sans-serif; color:var(--navy); outline:none; transition:border-color 0.2s; }
+    .add-input:focus { border-color:var(--gold); }
+    .add-btn { background:var(--gold); color:var(--navy); border:none; border-radius:6px; padding:0.48rem 0.88rem; font-size:0.82rem; font-weight:700; cursor:pointer; font-family:'DM Sans',sans-serif; transition:filter 0.2s; white-space:nowrap; }
+    .add-btn:hover { filter:brightness(1.08); }
+    .booking-close { width:100%; margin-top:1rem; background:var(--navy); color:white; border:none; border-radius:6px; padding:0.52rem; font-size:0.82rem; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; transition:background 0.2s; }
+    .booking-close:hover { background:var(--navy2); }
+
+    @media (max-width:600px) { .schedule-grid { grid-template-columns:repeat(4,1fr); gap:0.45rem; } .day-name,.time-slot,.unavail-label { font-size:0.57rem; } }
+    @media (max-width:380px) { .schedule-grid { grid-template-columns:repeat(3,1fr); } }
+  </style>
+</head>
+<body>
+
+<div class="rope-bar"></div>
+
+<!-- Admin button -->
+<button id="admin-btn">Admin</button>
+
+<!-- Auth modal -->
+<div class="modal-overlay" id="auth-modal">
+  <div class="modal-box">
+    <h3>Admin Access</h3>
+    <p>Enter your password to manage booked times.</p>
+    <input class="modal-input" id="auth-input" type="password" placeholder="Password" autocomplete="current-password" />
+    <div class="modal-error" id="auth-error"></div>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="auth-cancel">Cancel</button>
+      <button class="modal-submit" id="auth-submit">Sign In</button>
+    </div>
+  </div>
+</div>
+
+<!-- Booking editor modal -->
+<div class="modal-overlay" id="booking-modal">
+  <div class="booking-box">
+    <h3 id="booking-modal-title">Manage Booked Times</h3>
+    <ul class="booked-list" id="booking-list"></ul>
+    <p class="hint-text">e.g. "10:00 AM – 12:00 PM" or "Jake M. — 2:00 PM"</p>
+    <div class="add-row">
+      <input class="add-input" id="booking-input" type="text" placeholder="Add booked time…" maxlength="80" />
+      <button class="add-btn" id="booking-add-btn">+ Add</button>
+    </div>
+    <button class="booking-close" id="booking-close-btn">Done</button>
+  </div>
+</div>
+
+<!-- Nav -->
+<nav>
+  <div style="max-width:900px;margin:auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:0 1rem;">
+    <span style="color:var(--gold);font-family:'Playfair Display',serif;font-size:1rem;padding:0.75rem 0;font-weight:800;letter-spacing:0.03em;" id="nav-brand"></span>
+    <div>
+      <a href="#home" id="nav-home"></a>
+      <a href="#services" id="nav-services"></a>
+      <a href="#about" id="nav-about"></a>
+      <a href="#prices" id="nav-prices"></a>
+      <a href="#schedule" id="nav-schedule"></a>
+      <a href="#contact" id="nav-contact"></a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section id="home">
+  <svg class="compass" viewBox="0 0 200 200" fill="white" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="100" cy="100" r="96" stroke="white" stroke-width="1.5" fill="none"/>
+    <circle cx="100" cy="100" r="70" stroke="white" stroke-width="0.8" fill="none"/>
+    <polygon points="100,4 106,96 100,108 94,96" fill="white"/>
+    <polygon points="100,196 106,104 100,92 94,104" fill="white" opacity="0.6"/>
+    <polygon points="196,100 104,106 92,100 104,94" fill="white" opacity="0.6"/>
+    <polygon points="4,100 96,106 108,100 96,94" fill="white" opacity="0.6"/>
+    <text x="100" y="22"  text-anchor="middle" font-size="10" fill="white" font-weight="bold">N</text>
+    <text x="100" y="190" text-anchor="middle" font-size="10" fill="white">S</text>
+    <text x="185" y="104" text-anchor="middle" font-size="10" fill="white">E</text>
+    <text x="15"  y="104" text-anchor="middle" font-size="10" fill="white">W</text>
+    <circle cx="100" cy="100" r="6" fill="white"/>
+  </svg>
+  <div style="max-width:680px;margin:auto;position:relative;z-index:1;">
+    <div style="margin-bottom:1.5rem;">
+      <svg width="52" height="42" viewBox="0 0 52 42" fill="none">
+        <path d="M26 2 L26 34" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
+        <path d="M26 4 L8 30 L26 30 Z" fill="rgba(255,255,255,0.9)"/>
+        <path d="M26 8 L44 28 L26 28 Z" fill="rgba(200,168,75,0.8)"/>
+        <path d="M6 36 Q26 30 46 36" stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <ellipse cx="26" cy="39" rx="22" ry="3" fill="rgba(255,255,255,0.12)"/>
+      </svg>
+    </div>
+    <div class="section-label" id="hero-label" style="color:rgba(200,168,75,0.9);"></div>
+    <h1 style="font-family:'Playfair Display',serif;font-size:clamp(2rem,7vw,3.4rem);font-weight:800;line-height:1.1;margin:0.4rem 0 1.2rem;color:white;" id="hero-heading"></h1>
+    <p style="font-size:1.05rem;line-height:1.7;color:rgba(255,255,255,0.82);max-width:560px;margin-bottom:2rem;" id="hero-sub"></p>
+    <div style="display:flex;gap:0.8rem;flex-wrap:wrap;">
+      <a href="#prices" class="btn-gold" id="hero-cta"></a>
+      <a href="#about" class="btn-outline">Meet the Coaches</a>
+    </div>
+    <div style="margin-top:2.5rem;display:inline-flex;align-items:center;gap:0.6rem;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:999px;padding:0.45rem 1rem;font-size:0.78rem;color:rgba(255,255,255,0.85);backdrop-filter:blur(4px);">
+      <span>⛵</span><span>One coach aboard · One coach on the chase boat</span><span>🚤</span>
+    </div>
+  </div>
+  <svg class="wave-overlay" viewBox="0 0 1200 100" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+    <path d="M0,50 C150,100 350,0 500,50 C650,100 800,0 1000,50 C1100,75 1150,60 1200,50 L1200,100 L0,100 Z" fill="white"/>
+    <path d="M0,70 C200,30 400,90 600,60 C800,30 1000,80 1200,60 L1200,100 L0,100 Z" fill="white" opacity="0.5"/>
+  </svg>
+</section>
+
+<!-- Services -->
+<section id="services" style="padding:4.5rem 1.5rem;background:white;">
+  <div style="max-width:800px;margin:auto;" class="reveal">
+    <p class="section-label">How it works</p>
+    <h2 class="section-title" id="services-heading"></h2>
+    <div class="gold-rule" style="margin:1rem 0 2rem;"></div>
+    <div class="services-textbox" id="services-body"></div>
+  </div>
+</section>
+
+<!-- About -->
+<section id="about" style="padding:4.5rem 1.5rem;background:var(--cream);">
+  <div style="max-width:800px;margin:auto;" class="reveal">
+    <p class="section-label">Who we are</p>
+    <h2 class="section-title" id="about-heading"></h2>
+    <div class="gold-rule" style="margin:1rem 0 1.5rem;"></div>
+    <p style="font-size:1.02rem;line-height:1.75;color:#3a3a3a;margin-bottom:2.5rem;" id="about-intro"></p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.25rem;">
+      <div class="card" style="padding:1.5rem;">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <h3 style="font-family:'Playfair Display',serif;font-size:1.15rem;margin:0 0 0.6rem;color:var(--navy);" id="coach1-name"></h3>
+        <p style="font-size:0.9rem;line-height:1.65;color:#555;margin:0;" id="coach1-bio"></p>
+      </div>
+      <div class="card" style="padding:1.5rem;">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;margin-bottom:1rem;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </div>
+        <h3 style="font-family:'Playfair Display',serif;font-size:1.15rem;margin:0 0 0.6rem;color:var(--navy);" id="coach2-name"></h3>
+        <p style="font-size:0.9rem;line-height:1.65;color:#555;margin:0;" id="coach2-bio"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Prices -->
+<section id="prices" style="padding:4.5rem 1.5rem;background:white;">
+  <div style="max-width:800px;margin:auto;" class="reveal">
+    <p class="section-label">What we charge</p>
+    <h2 class="section-title" id="prices-heading"></h2>
+    <div class="gold-rule" style="margin:1rem 0 0.6rem;"></div>
+    <p style="font-size:0.88rem;color:#888;margin-bottom:2rem;" id="prices-note"></p>
+    <div id="price-list" style="display:flex;flex-direction:column;gap:0.85rem;"></div>
+  </div>
+</section>
+
+<!-- Schedule -->
+<section id="schedule" style="padding:4.5rem 1.5rem;background:var(--cream);">
+  <div style="max-width:800px;margin:auto;" class="reveal">
+    <p class="section-label">When we're on the water</p>
+    <h2 class="section-title">Weekly Schedule</h2>
+    <div class="gold-rule" style="margin:1rem 0 1.5rem;"></div>
+    <p style="font-size:0.95rem;line-height:1.7;color:#555;margin-bottom:2rem;" id="schedule-desc">
+      We run lessons on a recurring weekly schedule. Hover any available day to see booked times. Slots fill up fast — reach out early.
+    </p>
+
+    <div class="schedule-grid" id="schedule-grid"></div>
+
+    <div class="schedule-legend">
+      <span><span class="legend-dot" style="background:var(--gold);"></span>Available for booking</span>
+      <span><span class="legend-dot" style="background:#ddd;"></span>Not available</span>
+    </div>
+
+    <div class="schedule-note-card">
+      <div style="flex-shrink:0;width:42px;height:42px;border-radius:50%;background:rgba(200,168,75,0.15);border:1.5px solid rgba(200,168,75,0.4);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">📞</div>
+      <div>
+        <div style="color:white;font-weight:600;font-size:0.95rem;margin-bottom:0.2rem;">Ready to book a slot?</div>
+        <div style="color:rgba(255,255,255,0.65);font-size:0.83rem;line-height:1.5;">
+          Call or text <a href="tel:6472203060" style="color:var(--gold);text-decoration:none;font-weight:600;">647-220-3060</a> and we'll confirm your session quickly.
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Contact -->
+<section id="contact" style="padding:4.5rem 1.5rem;background:var(--navy);">
+  <div style="max-width:620px;margin:auto;text-align:center;" class="reveal">
+    <p class="section-label" style="color:var(--gold);">Get in touch</p>
+    <h2 style="font-family:'Playfair Display',serif;font-size:clamp(1.8rem,5vw,2.5rem);font-weight:800;color:white;margin:0.4rem 0 1rem;">Ready to get on the water?</h2>
+    <p style="color:rgba(255,255,255,0.7);font-size:1rem;line-height:1.7;margin-bottom:2.2rem;">Text or call us to book a session. We usually respond within a few hours.</p>
+    <div style="display:flex;flex-direction:column;gap:1rem;align-items:center;">
+      <a id="contact-phone-link" class="btn-gold" style="font-size:1.1rem;padding:0.9rem 2.2rem;"></a>
+      <a id="contact-email-link" class="btn-outline"></a>
+    </div>
+    <div style="margin-top:2.5rem;padding-top:2rem;border-top:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.45);font-size:0.82rem;" id="contact-location"></div>
+  </div>
+</section>
+
+<footer style="padding:1.2rem 1.5rem;text-align:center;font-size:0.78rem;border-top:1px solid rgba(255,255,255,0.08);">
+  <span id="footer-text"></span>
+</footer>
+<div class="rope-bar"></div>
+
+<script>
+  // ── Helpers ──────────────────────────────────────────────
+  const $ = id => document.getElementById(id);
+  const set = (id, txt) => { const el=$(id); if(el) el.textContent=txt; };
+
+  // ── Admin state ──────────────────────────────────────────
+  let isAdmin = false;
+
+  // ── Days config ──────────────────────────────────────────
+  const DAYS = [
+    { key:'mon', label:'Mon', available:true,  icon:'⛵', time:'3:30 PM – 6:00 PM' },
+    { key:'tue', label:'Tue', available:false, icon:'⚓', time:null },
+    { key:'wed', label:'Wed', available:false, icon:'⚓', time:null },
+    { key:'thu', label:'Thu', available:false, icon:'⚓', time:null },
+    { key:'fri', label:'Fri', available:true,  icon:'⛵', time:'3:30 PM – 6:00 PM' },
+    { key:'sat', label:'Sat', available:true,  icon:'⛵', time:'9:30 AM – 3:00 PM' },
+    { key:'sun', label:'Sun', available:true,  icon:'⛵', time:'9:30 AM – 3:00 PM' },
+  ];
+
+  // ── localStorage ─────────────────────────────────────────
+  function loadBookings() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; }
+    catch(e) { return {}; }
+  }
+  function saveBookings(data) { localStorage.setItem(LS_KEY, JSON.stringify(data)); }
+
+  // ── Build tooltip element ────────────────────────────────
+  function makeTooltip(slots) {
+    const tip = document.createElement('div');
+    tip.className = 'booked-tooltip';
+    tip.innerHTML = '<div class="tt-title">Booked Times</div>';
+    if (!slots || !slots.length) {
+      tip.innerHTML += '<div class="tt-empty">No bookings yet</div>';
+    } else {
+      slots.forEach(s => {
+        const d = document.createElement('div');
+        d.className = 'tt-item';
+        d.textContent = s;
+        tip.appendChild(d);
+      });
+    }
+    return tip;
+  }
+
+  // ── Render schedule grid ─────────────────────────────────
+  function renderGrid() {
+    const grid = $('schedule-grid');
+    grid.innerHTML = '';
+    const bookings = loadBookings();
+
+    DAYS.forEach(day => {
+      const slots = bookings[day.key] || [];
+      const card = document.createElement('div');
+      card.className = 'day-card ' + (day.available ? 'available' : 'unavailable');
+      if (day.available && isAdmin) card.classList.add('admin-mode');
+
+      const timeHTML = day.time ? `<div class="time-slot">${day.time.replace('–','–<br>')}</div><span class="time-badge">Open</span>` : `<div class="unavail-label">Not available</div>`;
+
+      card.innerHTML = `
+        ${isAdmin && day.available ? '<span class="edit-hint">✎</span>' : ''}
+        <div class="day-name">${day.label}</div>
+        <span class="day-icon">${day.icon}</span>
+        ${timeHTML}
+      `;
+
+      if (day.available) card.appendChild(makeTooltip(slots));
+
+      if (day.available && isAdmin) {
+        card.addEventListener('click', () => openBookingModal(day.key, day.label));
+      }
+
+      grid.appendChild(card);
+    });
+  }
+
+  // ── Booking editor ───────────────────────────────────────
+  let currentKey = null;
+
+  function openBookingModal(key, label) {
+    currentKey = key;
+    $('booking-modal-title').textContent = 'Booked Times — ' + label;
+    renderBookingList();
+    $('booking-input').value = '';
+    $('booking-modal').classList.add('open');
+    setTimeout(() => $('booking-input').focus(), 60);
+  }
+
+  function renderBookingList() {
+    const bookings = loadBookings();
+    const slots = bookings[currentKey] || [];
+    const ul = $('booking-list');
+    ul.innerHTML = '';
+
+    if (!slots.length) {
+      ul.innerHTML = '<li style="color:#bbb;font-size:0.8rem;border-left:none;background:none;padding:0.3rem 0.7rem;">No bookings added yet.</li>';
+      return;
+    }
+    slots.forEach((slot, i) => {
+      const li = document.createElement('li');
+      li.innerHTML = `<span>${slot}</span><button class="del-btn" title="Remove">✕</button>`;
+      li.querySelector('.del-btn').addEventListener('click', () => {
+        const b = loadBookings();
+        b[currentKey] = b[currentKey] || [];
+        b[currentKey].splice(i, 1);
+        saveBookings(b);
+        renderBookingList();
+        renderGrid();
+      });
+      ul.appendChild(li);
+    });
+  }
+
+  function addSlot() {
+    const val = $('booking-input').value.trim();
+    if (!val) return;
+    const b = loadBookings();
+    if (!b[currentKey]) b[currentKey] = [];
+    b[currentKey].push(val);
+    saveBookings(b);
+    $('booking-input').value = '';
+    renderBookingList();
+    renderGrid();
+  }
+
+  $('booking-add-btn').addEventListener('click', addSlot);
+  $('booking-input').addEventListener('keydown', e => { if (e.key==='Enter') addSlot(); });
+  $('booking-close-btn').addEventListener('click', () => { $('booking-modal').classList.remove('open'); currentKey=null; });
+  $('booking-modal').addEventListener('click', e => { if (e.target===$('booking-modal')) { $('booking-modal').classList.remove('open'); currentKey=null; } });
+
+  // ── Auth ─────────────────────────────────────────────────
+  $('admin-btn').addEventListener('click', () => {
+    if (isAdmin) {
+      isAdmin = false;
+      $('admin-btn').textContent = 'Admin';
+      $('admin-btn').classList.remove('active');
+      renderGrid();
+    } else {
+      $('auth-input').value = '';
+      $('auth-error').textContent = '';
+      $('auth-modal').classList.add('open');
+      setTimeout(() => $('auth-input').focus(), 80);
+    }
+  });
+
+  function tryLogin() {
+    if ($('auth-input').value === ADMIN_PASSWORD) {
+      isAdmin = true;
+      $('admin-btn').textContent = 'Admin ✓';
+      $('admin-btn').classList.add('active');
+      $('auth-modal').classList.remove('open');
+      renderGrid();
+    } else {
+      $('auth-error').textContent = 'Incorrect password. Try again.';
+      $('auth-input').select();
+    }
+  }
+
+  $('auth-submit').addEventListener('click', tryLogin);
+  $('auth-input').addEventListener('keydown', e => { if (e.key==='Enter') tryLogin(); });
+  $('auth-cancel').addEventListener('click', () => $('auth-modal').classList.remove('open'));
+  $('auth-modal').addEventListener('click', e => { if (e.target===$('auth-modal')) $('auth-modal').classList.remove('open'); });
+
+  // ── Static render ────────────────────────────────────────
+  function renderSite() {
+    const S = SITE;
+    set('nav-brand',      S.businessName);
+    set('nav-home',       S.nav.home);
+    set('nav-services',   S.nav.services);
+    set('nav-about',      S.nav.about);
+    set('nav-prices',     S.nav.prices);
+    set('nav-schedule',   S.nav.schedule);
+    set('nav-contact',    S.nav.contact);
+    $('hero-label').textContent = S.location;
+    set('hero-heading',   S.hero.heading);
+    set('hero-sub',       S.hero.subheading);
+    set('hero-cta',       S.hero.ctaLabel);
+    set('services-heading', S.services.heading);
+    set('services-body',    S.services.body);
+    set('about-heading',  S.about.heading);
+    set('about-intro',    S.about.intro);
+    set('coach1-name',    S.about.coach1.name);
+    set('coach1-bio',     S.about.coach1.bio);
+    set('coach2-name',    S.about.coach2.name);
+    set('coach2-bio',     S.about.coach2.bio);
+    set('prices-heading', S.prices.heading);
+    set('prices-note',    S.prices.note);
+
+    const list = $('price-list');
+    S.prices.items.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'card price-card';
+      div.style.cssText = 'padding:1.1rem 1.25rem;display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;transition:all 0.25s;cursor:default;';
+      div.innerHTML = `<div><div style="font-weight:600;font-size:1rem;color:var(--navy);">${item.service}</div><div style="font-size:0.82rem;color:#777;margin-top:0.2rem;">${item.detail}</div></div><div style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--navy2);white-space:nowrap;">${item.price}</div>`;
+      list.appendChild(div);
+    });
+
+    const ph = $('contact-phone-link');
+    ph.href = 'tel:' + S.phone.replace(/\D/g,'');
+    ph.textContent = '📞 ' + S.phone;
+    const em = $('contact-email-link');
+    em.href = 'mailto:' + S.email;
+    em.textContent = S.email;
+    set('contact-location', S.location);
+    set('footer-text', '© ' + new Date().getFullYear() + ' ' + S.businessName + ' · ' + S.location);
+    document.title = S.businessName;
+  }
+
+  // ── Scroll reveal ────────────────────────────────────────
+  new IntersectionObserver((entries, io) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+  }, { threshold:0.12 }).observe && document.querySelectorAll('.reveal').forEach(el => {
+    new IntersectionObserver((entries, io) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+    }, { threshold:0.12 }).observe(el);
+  });
+
+  // ── Smooth scroll ────────────────────────────────────────
+  document.querySelectorAll('nav a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => { e.preventDefault(); const t=document.querySelector(a.getAttribute('href')); if(t) t.scrollIntoView({behavior:'smooth',block:'start'}); });
+  });
+
+  // ── Boot ─────────────────────────────────────────────────
+  renderSite();
+  renderGrid();
+</script>
+</body>
+</html>
